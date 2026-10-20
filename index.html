@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f1d44">
+<title>The Goal Hunters</title>
+<link rel="icon" href="/logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=Hind+Siliguri:wght@400;500;600&display=swap">
+<style>
+/* Layout: broadcast-style scoreboard rows under a navy club band. One bold moment: the navy/yellow score tile taken from the eFootball result card. */
+:root{
+  --bg:#f2f5ef; --surface:#ffffff; --ink:#0f1d44; --muted:#59658a; --line:#d8dfd3;
+  --pitch:#1c8a3a; --pitch-soft:#e1f1e3; --band:#0f1d44; --band-ink:#ffffff;
+  --tile:#0f1d44; --tile-ink:#f3e84a; --warn:#b4540a; --warn-soft:#fbeedc; --bad:#b3261e; --bad-soft:#fbe4e2;
+  --f-display:'Barlow Condensed','Arial Narrow',sans-serif;
+  --f-body:'Barlow','Hind Siliguri',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0a1230; --surface:#111b43; --ink:#eef1fa; --muted:#9aa6c8; --line:#243063;
+  --pitch:#43c065; --pitch-soft:#12331f; --band:#060b20; --band-ink:#ffffff;
+  --tile:#050a1d; --tile-ink:#f3e84a; --warn:#f0a35a; --warn-soft:#3a2711; --bad:#ff8a80; --bad-soft:#3d1714; color-scheme:dark}}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:900px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+.band{background:var(--band);color:var(--band-ink);position:relative;overflow:hidden;padding-top:env(safe-area-inset-top,0px)}
+.band .wrap{display:flex;align-items:center;gap:16px;padding-block:18px 20px;position:relative;z-index:1}
+.band svg.pitch{position:absolute;right:-60px;top:50%;transform:translateY(-50%);width:300px;height:300px;opacity:.12;z-index:0}
+.logo{width:64px;height:64px;border-radius:14px;background:#fff;flex:none;object-fit:cover}
+.band h1{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,7vw,42px);line-height:1;letter-spacing:.02em;text-transform:uppercase;margin:0}
+.band h1 em{font-style:normal;color:#5fd47f}
+.band p{margin:6px 0 0;font-size:13px;opacity:.78;letter-spacing:.05em;text-transform:uppercase}
+.who{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-size:13px;text-align:right}
+.who b{font-weight:600}
+.who button{appearance:none;border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;border-radius:999px;padding:4px 14px;font-size:14px;cursor:pointer}
+
+.tabs{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.tabs .wrap{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.tab{appearance:none;border:0;background:none;cursor:pointer;padding:13px 13px 11px;font-family:var(--f-display);font-weight:700;font-size:19px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--pitch)}
+.tab:focus-visible,.btn:focus-visible,.chip:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--pitch);outline-offset:2px}
+
+main{padding-block:22px 72px}
+h2{font-family:var(--f-display);font-weight:800;font-size:26px;letter-spacing:.03em;text-transform:uppercase;margin:0 0 4px;text-wrap:balance}
+.lead{color:var(--muted);margin:0 0 18px;max-width:62ch}
+.label{font-family:var(--f-display);font-weight:700;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+.btn{appearance:none;border:1px solid var(--ink);background:var(--ink);color:var(--bg);border-radius:8px;padding:9px 16px;font-weight:600;cursor:pointer}
+.btn:hover{filter:brightness(1.12)}
+.btn.green{background:var(--pitch);border-color:var(--pitch);color:#fff}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.small{padding:5px 11px;font-size:14px}
+.btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.chip{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 14px;font-size:14px;font-weight:500;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+.prog{display:flex;align-items:center;gap:12px;margin-bottom:16px;font-size:14px;color:var(--muted)}
+.prog .bar{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.prog .bar i{display:block;height:100%;background:var(--pitch)}
+
+.round{margin:26px 0 10px;display:flex;align-items:baseline;gap:10px}
+.round:first-of-type{margin-top:8px}
+.round h3{font-family:var(--f-display);font-weight:800;font-size:22px;letter-spacing:.06em;text-transform:uppercase;margin:0}
+.round span{font-size:13px;color:var(--muted)}
+.match{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-bottom:10px}
+.mrow{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px;padding:14px 14px 10px}
+.side{min-width:0}
+.side.home{text-align:right}
+.side b{display:block;font-weight:600;font-size:17px;line-height:1.2;overflow-wrap:anywhere}
+.side small{display:block;color:var(--muted);font-size:13px;margin-top:2px;overflow-wrap:anywhere}
+.side.win b{color:var(--pitch)}
+.side.lose b{font-weight:500}
+.side.tbd b{color:var(--muted);font-weight:500}
+.rt{display:inline-block;margin-top:4px;font-family:var(--f-display);font-weight:800;font-size:17px;letter-spacing:.04em;color:var(--muted)}
+.rt.hi{color:var(--pitch)}.rt.lo{color:var(--warn)}
+.score{background:var(--tile);color:var(--tile-ink);font-family:var(--f-display);font-weight:800;font-size:34px;line-height:1;letter-spacing:.04em;padding:8px 14px 7px;border-radius:6px;min-width:92px;text-align:center;font-variant-numeric:tabular-nums}
+.score.vs{background:transparent;color:var(--muted);border:1px dashed var(--line);font-size:22px;padding:11px 14px 9px}
+.mfoot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 14px 12px;flex-wrap:wrap}
+.tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.pill{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:2px 9px;border-radius:999px;background:var(--warn-soft);color:var(--warn)}
+.pill.done{background:var(--pitch-soft);color:var(--pitch)}
+.pill.plain{background:var(--line);color:var(--muted)}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.pens{padding:0 14px 10px;font-size:14px;color:var(--muted);text-align:center}
+details.st{border-top:1px solid var(--line)}
+details.st summary{cursor:pointer;padding:9px 14px;font-size:14px;color:var(--muted);list-style:none}
+details.st summary::-webkit-details-marker{display:none}
+details.st summary::after{content:" +"}
+details.st[open] summary::after{content:" −"}
+.srow{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:8px;align-items:center;padding:3px 14px;font-variant-numeric:tabular-nums;font-size:14px}
+.srow .n{font-weight:600}.srow .n:last-child{text-align:right}
+.srow .mid{text-align:center;min-width:0}
+.srow .mid span{font-size:12px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.sbar{display:flex;height:5px;border-radius:3px;overflow:hidden;background:var(--line);margin-top:2px}
+.sbar i{display:block;background:var(--pitch)}
+.sbar i+i{background:var(--ink);opacity:.55}
+.srow:last-child{padding-bottom:12px}
+
+.groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:14px}
+.gcard{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.gcard header{display:flex;justify-content:space-between;align-items:baseline;padding:10px 14px 4px}
+.gcard header h3{font-family:var(--f-display);font-weight:800;font-size:22px;letter-spacing:.06em;text-transform:uppercase;margin:0}
+.gcard header span{font-size:12px;color:var(--muted)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line);font-size:15px}
+th{font-family:var(--f-display);font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.pl,th.pl{text-align:left;padding-left:14px}
+td.pl b{font-weight:600}
+td.pl small{display:block;color:var(--muted);font-size:12px}
+td.rk{font-family:var(--f-display);font-weight:800;font-size:19px;width:34px;color:var(--muted)}
+tr.q td.pl{box-shadow:inset 3px 0 0 var(--pitch)}
+tr.q td.rk{color:var(--pitch)}
+tr.me{background:var(--pitch-soft)}
+td.pts{font-family:var(--f-display);font-weight:800;font-size:21px}
+.legend{font-size:12px;color:var(--muted);padding:6px 14px 10px}
+.legend i{display:inline-block;width:3px;height:11px;background:var(--pitch);margin-right:6px;vertical-align:-1px}
+
+.bracket{display:flex;gap:18px;overflow-x:auto;padding-bottom:10px;align-items:stretch}
+.bcol{display:flex;flex-direction:column;justify-content:space-around;gap:10px;min-width:210px;flex:1}
+.bcol h3{font-family:var(--f-display);font-weight:800;font-size:17px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 2px;color:var(--muted)}
+.bm{background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.bm div{display:flex;justify-content:space-between;gap:8px;padding:7px 10px;font-size:15px;align-items:center}
+.bm div+div{border-top:1px solid var(--line)}
+.bm span{min-width:0;overflow-wrap:anywhere}
+.bm b{font-family:var(--f-display);font-weight:800;font-size:20px;min-width:22px;text-align:right}
+.bm .w{background:var(--pitch-soft)}
+.bm .w span{font-weight:600}
+.bm .tbd span{color:var(--muted)}
+.champ{background:var(--tile);color:var(--tile-ink);border-radius:12px;padding:18px;text-align:center;margin-bottom:18px}
+.champ small{display:block;font-family:var(--f-display);letter-spacing:.14em;text-transform:uppercase;opacity:.8}
+.champ b{font-family:var(--f-display);font-weight:800;font-size:38px;letter-spacing:.04em;text-transform:uppercase}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+.drop{display:block;text-align:center;border:2px dashed var(--line);border-radius:12px;padding:34px 16px;cursor:pointer;background:var(--surface)}
+.drop:hover,.drop.over{border-color:var(--pitch);background:var(--pitch-soft)}
+.drop b{display:block;font-family:var(--f-display);font-weight:800;font-size:24px;letter-spacing:.04em;text-transform:uppercase}
+.drop span{color:var(--muted);font-size:15px}
+.hint{font-size:14px;color:var(--muted);margin:10px 0 0}
+.note{border-radius:8px;padding:10px 14px;font-size:15px;margin:0 0 14px}
+.note.ok{background:var(--pitch-soft);color:var(--pitch)}
+.note.warn{background:var(--warn-soft);color:var(--warn)}
+.note.bad{background:var(--bad-soft);color:var(--bad)}
+.scan{display:flex;gap:16px;align-items:center}
+.scan img{width:120px;max-width:35%;border-radius:8px;border:1px solid var(--line)}
+.spin{width:22px;height:22px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--pitch);animation:sp .8s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:2.4s}}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field>span{font-size:14px;color:var(--muted)}
+input[type=text],input[type=password],input[type=number],select.f,textarea{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 11px;width:100%;min-width:0}
+textarea{min-height:120px;resize:vertical}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px}
+.sc{display:grid;grid-template-columns:minmax(0,1fr) 78px 20px 78px minmax(0,1fr);gap:8px;align-items:center;margin:16px 0}
+.sc .nm{font-weight:600;overflow-wrap:anywhere;line-height:1.2}
+.sc .nm.r{text-align:right}
+.sc input{text-align:center;font-family:var(--f-display);font-weight:800;font-size:30px;padding:6px 4px;background:var(--tile);color:var(--tile-ink);border-color:var(--tile)}
+.sc .dash{text-align:center;color:var(--muted)}
+.sgrid{display:grid;grid-template-columns:70px minmax(0,1fr) 70px;gap:6px 10px;align-items:center;margin-bottom:16px}
+.sgrid input{text-align:center;padding:6px 4px}
+.sgrid .l{text-align:center;font-size:14px;color:var(--muted)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.stack{display:flex;flex-direction:column;gap:18px}
+.plist{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:6px}
+.plist li{display:flex;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--bg);flex-wrap:wrap}
+.plist li>div:first-child{min-width:0;flex:1 1 180px}
+.plist b{display:block;overflow-wrap:anywhere}
+.plist small{color:var(--muted);overflow-wrap:anywhere}
+.plist .pin{font-family:var(--f-display);font-weight:800;font-size:20px;letter-spacing:.14em}
+.empty{text-align:center;padding:44px 16px;border:1px dashed var(--line);border-radius:12px}
+.empty h2{margin-bottom:8px}
+.empty p{color:var(--muted);margin:0 auto 16px;max-width:46ch}
+.rank{font-family:var(--f-display);font-weight:800;font-size:22px}
+.rbadge{display:inline-block;min-width:54px;padding:3px 8px;border-radius:6px;background:var(--tile);color:var(--tile-ink);font-family:var(--f-display);font-weight:800;font-size:20px;letter-spacing:.04em}
+
+@media (max-width:520px){
+  .mrow{gap:8px;padding-inline:10px}
+  .score{min-width:78px;font-size:30px;padding-inline:10px}
+  .side b{font-size:15px}
+  .band .wrap{gap:10px}.logo{width:52px;height:52px}
+  .band p{display:none}
+  .sc{grid-template-columns:minmax(0,1fr) 64px 14px 64px minmax(0,1fr);gap:6px}
+}
+</style>
+</head>
+<body>
+<header class="band">
+  <svg class="pitch" viewBox="0 0 300 300" fill="none" stroke="#fff" stroke-width="4" aria-hidden="true"><circle cx="150" cy="150" r="110"/><circle cx="150" cy="150" r="6" fill="#fff"/><path d="M150 0v300"/></svg>
+  <div class="wrap">
+    <img class="logo" alt="The Goal Hunters logo" src="/logo.jpg">
+    <div>
+      <h1>The Goal <em>Hunters</em></h1>
+      <p>eFootball Group · Solo Tournament</p>
+    </div>
+    <div class="who" id="who"></div>
+  </div>
+</header>
+<nav class="tabs" aria-label="Sections"><div class="wrap" id="tabs" role="tablist"></div></nav>
+<main class="wrap"><div id="view" aria-live="polite"></div></main>
+
+<script type="module">
+import {STATS,STAGES,STAGE_ORDER,GROUP_LETTERS,findMatch,swapFor,orient,standings,ratingTable,playerSim,canSubmitSide,winnerId} from '/logic.js';
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ls={get(k){try{return localStorage.getItem(k)||''}catch(e){return ''}},set(k,v){try{v?localStorage.setItem(k,v):localStorage.removeItem(k)}catch(e){}}};
+const fnum=v=>v===null||v===undefined||v===''?'':String(v);
+
+const S={data:{settings:{},players:[],matches:[]},me:null,token:ls.get('gh_token'),scan:false,loaded:false,offline:false,
+  tab:'matches',f:{stage:'all',grp:'all',status:'all',mine:false},open:new Set(),sub:newSub(),confirm:'',busy:'',msg:null,dirty:false,pendingId:''};
+function newSub(){return {stage:'idle',url:'',raw:null,err:'',mid:'',hs:'',aw:'',stats:{},pen:'',note:null,editing:false,ctl:null,rating:null}}
+
+/* ---------- api ---------- */
+async function api(path,{method='GET',body,raw,type}={}){
+  const h={};if(S.token)h.authorization='Bearer '+S.token;
+  let payload;
+  if(raw){payload=raw;h['content-type']=type}else if(body!==undefined){payload=JSON.stringify(body);h['content-type']='application/json'}
+  let res;
+  try{res=await fetch('/api/'+path,{method,headers:h,body:payload})}catch(e){throw new Error('ইন্টারনেট সংযোগ নেই। আবার চেষ্টা করুন।')}
+  let data={};try{data=await res.json()}catch(e){}
+  if(res.status===401&&S.token&&path!=='login'){setToken('');S.me=null}
+  if(!res.ok)throw new Error(data.error||'কিছু একটা ভুল হয়েছে।');
+  return data;
+}
+function setToken(t){S.token=t;ls.set('gh_token',t)}
+async function load(){
+  try{
+    const d=await api('state');
+    S.data={settings:d.settings||{},players:d.players,matches:d.matches};S.me=d.me;S.scan=d.scan;S.loaded=true;S.offline=false;
+    if(S.token&&!d.me){setToken('')}
+  }catch(e){S.offline=!S.loaded;S.loadErr=e.message}
+  refresh();
+}
+
+/* ---------- helpers ---------- */
+const D=()=>S.data;
+const P=()=>Object.fromEntries(D().players.map(p=>[p.id,p]));
+const isAdmin=()=>S.me?.role==='admin';
+const myId=()=>S.me?.role==='player'?S.me.pid:null;
+const meName=()=>isAdmin()?'Admin':(P()[myId()]?.name||'');
+const matchById=id=>D().matches.find(m=>m.id===id);
+const SRC={R16:'Round of 16',QF:'Quarter Final',SF:'Semi Final',F:'Final'};
+const srcLabel=s=>{if(!s)return 'TBD';const [st,n]=s.slice(2).split('-');return `Winner · ${SRC[st]||st} #${n}`};
+const stageIdx=m=>STAGE_ORDER.indexOf(m.stage);
+const heading=m=>m.stage==='group'?`Group Stage · Round ${m.round_no}`:STAGES[m.stage];
+const mLabel=(m,p)=>`${m.stage==='group'?`Group ${m.grp}`:STAGES[m.stage]} · ${p[m.home_id]?.name||'TBD'} vs ${p[m.away_id]?.name||'TBD'}`;
+const sortM=(a,b)=>stageIdx(a)-stageIdx(b)||(a.round_no||0)-(b.round_no||0)||(a.grp||'').localeCompare(b.grp||'')||a.ord-b.ord;
+const rtClass=v=>v>=8?'hi':v<6?'lo':'';
+
+/* ---------- render shell ---------- */
+function renderChrome(){
+  const t=[['matches','Matches'],['groups','Groups'],['bracket','Bracket'],['ratings','Ratings'],['submit','Result']];
+  if(isAdmin())t.push(['admin','Admin']);
+  $('#tabs').innerHTML=t.map(([k,l])=>`<button class="tab" role="tab" data-act="tab" data-k="${k}" aria-selected="${S.tab===k}">${l}</button>`).join('');
+  $('#who').innerHTML=S.me?`<b>${esc(meName())}</b><button data-act="logout">Logout</button>`:`<button data-act="tab" data-k="login">Login</button>`;
+}
+function refresh(force){
+  renderChrome();
+  const a=document.activeElement,v=$('#view');
+  if(!force&&v.contains(a)&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)){S.dirty=true;return}
+  if(!force&&S.tab==='submit'&&S.sub.stage!=='idle'&&S.sub.stage!=='saved')return;
+  S.dirty=false;
+  const views={matches:vMatches,groups:vGroups,bracket:vBracket,ratings:vRatings,submit:vSubmit,admin:vAdmin,login:vLogin};
+  const head=S.msg?`<p class="note ${S.msg.k}">${esc(S.msg.t)}</p>`:'';
+  v.innerHTML=(S.loaded?head+views[S.tab]():gate());
+}
+function gate(){
+  if(S.offline)return `<div class="empty"><h2>লোড করা যাচ্ছে না</h2><p>${esc(S.loadErr||'')}</p><button class="btn" data-act="reload">আবার চেষ্টা করুন</button></div>`;
+  return `<div class="empty"><h2>লোড হচ্ছে…</h2></div>`;
+}
+function notStarted(){
+  return `<div class="empty"><h2>টুর্নামেন্ট এখনো শুরু হয়নি</h2><p>অ্যাডমিন প্লেয়ারদের ৮টি গ্রুপে ভাগ করলে ম্যাচগুলো এখানে দেখা যাবে। ম্যাচ শেষে রিসাল্ট কার্ডের স্ক্রিনশট দিলেই ফলাফল বসে যাবে।</p>${S.me?'':`<button class="btn green" data-act="tab" data-k="login">Login</button>`}</div>`;
+}
+function needLogin(why){
+  return `<h2>Login দরকার</h2><p class="lead">${why}</p><button class="btn green" data-act="tab" data-k="login">Login করুন</button>`;
+}
+
+/* ---------- matches ---------- */
+function sideHtml(m,which,cls=''){
+  const p=P()[which==='home'?m.home_id:m.away_id],src=which==='home'?m.home_src:m.away_src;
+  const r=m.status==='done'?(which==='home'?m.rating_h:m.rating_a):null;
+  if(!p)return `<div class="side ${which} tbd"><b>TBD</b><small>${esc(srcLabel(src))}</small></div>`;
+  return `<div class="side ${which} ${cls}"><b>${esc(p.name)}</b>${p.team&&p.team!==p.name?`<small>${esc(p.team)}</small>`:''}${r!=null?`<span class="rt ${rtClass(r)}" title="Match rating">${r.toFixed(1)}</span>`:''}</div>`;
+}
+function statsHtml(m){
+  const rows=STATS.filter(([k])=>m.stats?.[k]).map(([k,l])=>{
+    const [a,b]=m.stats[k],t=(a+b)||1,pct=k==='possession'?'%':'';
+    return `<div class="srow"><span class="n">${a}${pct}</span><div class="mid"><span>${l}</span><div class="sbar"><i style="width:${a/t*100}%"></i><i style="width:${b/t*100}%"></i></div></div><span class="n">${b}${pct}</span></div>`}).join('');
+  return rows?`<details class="st" data-id="${esc(m.id)}"${S.open.has(m.id)?' open':''}><summary>Match stats</summary>${rows}</details>`:'';
+}
+function matchCard(m){
+  const done=m.status==='done',hw=done&&winnerId(m)===m.home_id,aw=done&&winnerId(m)===m.away_id;
+  const acts=[],pid=myId(),ready=m.home_id&&m.away_id;
+  if(!done&&ready&&(isAdmin()||pid===m.home_id||pid===m.away_id))acts.push(`<button class="btn green small" data-act="submitFor" data-id="${esc(m.id)}">Result দিন</button>`);
+  if(done&&isAdmin()){
+    acts.push(`<button class="btn ${m.verified?'ghost':'green'} small" data-act="verify" data-id="${esc(m.id)}" data-v="${m.verified?0:1}">${m.verified?'Unverify':'✓ Verify'}</button>`,`<button class="btn ghost small" data-act="editM" data-id="${esc(m.id)}">সংশোধন</button>`);
+    acts.push(S.confirm==='del:'+m.id?`<button class="btn danger small" data-act="delM" data-id="${esc(m.id)}">হ্যাঁ, ডিলিট</button><button class="btn ghost small" data-act="confirm" data-k="">না</button>`:`<button class="btn ghost small" data-act="confirm" data-k="del:${esc(m.id)}">Delete</button>`);
+  }
+  const tag=m.stage==='group'?`Group ${m.grp}`:'';
+  const pen=done&&m.hs===m.aw&&m.pen_winner?`<div class="pens">Penalty-তে জিতেছে: <b>${esc(P()[m.pen_winner]?.name)}</b></div>`:'';
+  return `<article class="match"><div class="mrow">${sideHtml(m,'home',hw?'win':done?'lose':'')}
+    <div class="score${done?'':' vs'}">${done?`${m.hs}–${m.aw}`:'VS'}</div>${sideHtml(m,'away',aw?'win':done?'lose':'')}</div>${pen}
+    <div class="mfoot"><div class="tags">${tag?`<span class="pill plain">${tag}</span>`:''}<span class="pill${done?' done':''}">${done?'Full time':'Pending'}</span>${done?`<span class="pill ${m.verified?'done':''}">${m.verified?'Verified':'Unchecked'}</span>`:''}</div><div class="acts">${acts.join('')}</div></div>${done?statsHtml(m):''}</article>`;
+}
+function vMatches(){
+  const ms=D().matches;if(!ms.length)return notStarted();
+  const f=S.f,pid=myId(),done=ms.filter(m=>m.status==='done').length;
+  const list=ms.filter(m=>(f.stage==='all'||m.stage===f.stage)&&(f.grp==='all'||m.grp===f.grp)&&(f.status==='all'||(f.status==='done')===(m.status==='done'))&&(!f.mine||!pid||m.home_id===pid||m.away_id===pid)).sort(sortM);
+  const chip=(k,v,l)=>`<button class="chip" data-act="flt" data-k="${k}" data-v="${v}" aria-pressed="${f[k]===v}">${l}</button>`;
+  let last='',html='';
+  for(const m of list){const h=heading(m);if(h!==last){const n=list.filter(x=>heading(x)===h).length;html+=`<div class="round"><h3>${esc(h)}</h3><span>${n} match${n>1?'es':''}</span></div>`;last=h}html+=matchCard(m)}
+  const hasKo=ms.some(m=>m.stage!=='group');
+  return `<h2>${esc(D().settings.name||'Matches')}</h2>
+  <div class="prog"><span>${done} / ${ms.length} played</span><div class="bar"><i style="width:${done/ms.length*100}%"></i></div></div>
+  <div class="chips">${chip('status','all','All')}${chip('status','pending','Pending')}${chip('status','done','Done')}${pid?`<button class="chip" data-act="mine" aria-pressed="${f.mine}">আমার ম্যাচ</button>`:''}</div>
+  <div class="chips">${chip('stage','all','সব স্টেজ')}${chip('stage','group','Groups')}${hasKo?['r16','qf','sf','final'].map(s=>chip('stage',s,STAGES[s])).join(''):''}</div>
+  ${f.stage==='all'||f.stage==='group'?`<div class="chips">${chip('grp','all','সব গ্রুপ')}${GROUP_LETTERS.map(g=>chip('grp',g,g)).join('')}</div>`:''}
+  ${html||`<div class="empty"><p>এই ফিল্টারে কোনো ম্যাচ নেই।</p></div>`}`;
+}
+
+/* ---------- groups ---------- */
+function vGroups(){
+  const d=D();if(!d.matches.length)return notStarted();
+  const pid=myId();
+  return `<h2>Groups</h2><p class="lead">৮টি গ্রুপ, প্রতিটি থেকে প্রথম ২ জন Round of 16-এ যাবে। জয় ৩, ড্র ১, হার ০ পয়েন্ট। পয়েন্ট সমান হলে গোল ব্যবধান, তারপর গোল সংখ্যা।</p>
+  <div class="groups">${GROUP_LETTERS.map(g=>{
+    const ids=d.players.filter(p=>p.grp===g).map(p=>p.id);if(!ids.length)return '';
+    const gm=d.matches.filter(m=>m.grp===g),rows=standings(ids,gm,d.players),dn=gm.filter(m=>m.status==='done').length;
+    return `<section class="gcard"><header><h3>Group ${g}</h3><span>${dn} / ${gm.length} played</span></header><div class="tbl"><table><thead><tr><th>#</th><th class="pl">Player</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead><tbody>
+    ${rows.map((r,i)=>`<tr class="${i<2?'q':''}${pid===r.id?' me':''}"><td class="rk">${i+1}</td><td class="pl"><b>${esc(r.p.name)}</b></td><td>${r.P}</td><td>${r.W}</td><td>${r.D}</td><td>${r.L}</td><td>${r.GF-r.GA>0?'+':''}${r.GF-r.GA}</td><td class="pts">${r.Pts}</td></tr>`).join('')}
+    </tbody></table></div><div class="legend"><i></i>Top 2 qualify</div></section>`}).join('')}</div>`;
+}
+
+/* ---------- bracket ---------- */
+function vBracket(){
+  const ms=D().matches.filter(m=>m.stage!=='group');
+  if(!ms.length)return `<h2>Bracket</h2><div class="empty"><h2>নকআউট এখনো শুরু হয়নি</h2><p>সব গ্রুপ ম্যাচ শেষ হলে অ্যাডমিন Round of 16 তৈরি করবে। এখানে Round of 16 থেকে Grand Final পর্যন্ত পুরো ব্রাকেট দেখা যাবে।</p></div>`;
+  const p=P(),fin=ms.find(m=>m.stage==='final'),champ=fin&&winnerId(fin)?p[winnerId(fin)]:null;
+  const box=m=>{
+    const w=winnerId(m),one=(id,src,sc)=>{const pl=p[id];return `<div class="${w&&w===id?'w':''}${pl?'':' tbd'}"><span>${esc(pl?pl.name:srcLabel(src))}</span><b>${m.status==='done'?sc:''}</b></div>`};
+    return `<div class="bm">${one(m.home_id,m.home_src,m.hs)}${one(m.away_id,m.away_src,m.aw)}</div>`;
+  };
+  return `<h2>Bracket</h2><p class="lead">নকআউটের সব ম্যাচ এক লেগে। ড্র হলে পেনাল্টিতে যে জেতে সে এগিয়ে যায়।</p>
+  ${champ?`<div class="champ"><small>Champion</small><b>${esc(champ.name)}</b></div>`:''}
+  <div class="bracket">${['r16','qf','sf','final'].map(s=>`<div class="bcol"><h3>${STAGES[s]}</h3>${ms.filter(m=>m.stage===s).sort((a,b)=>a.ord-b.ord).map(box).join('')}</div>`).join('')}</div>`;
+}
+
+/* ---------- ratings ---------- */
+function vRatings(){
+  const d=D();if(!d.players.length)return notStarted();
+  const rows=ratingTable(d.players,d.matches);
+  return `<h2>Player Ratings</h2><p class="lead">রেটিং বের হয় প্রতিটি ম্যাচের রিসাল্ট ও কার্ডের স্ট্যাটস থেকে: গোল, শট অন টার্গেট, পাসিং, পজেশন, ট্যাকল-ইন্টারসেপশন ও সেভ। প্রতিটি ম্যাচের রেটিংয়ের গড় এখানে দেখানো হয়।</p>
+  <div class="card tbl" style="padding:0"><table><thead><tr><th>#</th><th class="pl">Player</th><th>Matches</th><th>Avg</th><th>Best</th></tr></thead><tbody>
+  ${rows.map((r,i)=>`<tr class="${myId()===r.p.id?'me':''}"><td class="rk">${r.n?i+1:'–'}</td><td class="pl"><b>${esc(r.p.name)}</b><small>${r.p.grp?'Group '+r.p.grp:''}</small></td><td>${r.n}</td><td>${r.n?`<span class="rbadge">${r.avg.toFixed(1)}</span>`:'–'}</td><td>${r.n?r.best.toFixed(1):'–'}</td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+/* ---------- login ---------- */
+function vLogin(){
+  if(S.me)return `<h2>Login</h2><p class="lead"><b>${esc(meName())}</b> হিসেবে লগইন করা আছে।</p><div class="row"><button class="btn green" data-act="tab" data-k="submit">রিসাল্ট দিন</button><button class="btn ghost" data-act="logout">Logout</button></div>`;
+  const ps=[...D().players].sort((a,b)=>a.name.localeCompare(b.name));
+  return `<h2>Login</h2><p class="lead">রিসাল্ট দিতে লগইন করতে হয়। অ্যাডমিন আপনাকে একটি ৪ সংখ্যার PIN দেবে।</p>
+  <div class="stack"><form class="card" id="playerLogin"><div class="label" style="margin-bottom:10px">Player</div>
+    <div class="fgrid"><label class="field"><span>আপনার নাম</span><select class="f" id="lp" required><option value="">— বেছে নিন —</option>${ps.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select></label>
+    <label class="field"><span>PIN</span><input id="lpin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="8" required></label></div>
+    <button class="btn green" type="submit"${S.busy==='login'?' disabled':''}>Login</button></form>
+  <form class="card" id="adminLogin"><div class="label" style="margin-bottom:10px">Admin</div>
+    <div class="fgrid"><label class="field"><span>পাসওয়ার্ড</span><input id="apw" type="password" autocomplete="current-password" required></label></div>
+    <button class="btn" type="submit"${S.busy==='login'?' disabled':''}>Admin Login</button></form></div>`;
+}
+
+/* ---------- submit result ---------- */
+function candidates(){
+  const pid=myId();
+  return D().matches.filter(m=>m.home_id&&m.away_id&&(isAdmin()||(m.status!=='done'&&(m.home_id===pid||m.away_id===pid)))).sort(sortM);
+}
+function vSubmit(){
+  if(!S.me)return needLogin('রিসাল্ট দিতে আগে লগইন করুন। ম্যাচ জেতা বা ড্র করা প্লেয়ার রিসাল্ট দেবে।');
+  if(!D().matches.length)return notStarted();
+  const s=S.sub;
+  if(s.stage==='saved'){
+    const m=matchById(s.mid);
+    return `<h2>রিসাল্ট সেভ হয়েছে</h2><p class="lead">টেবিল ও ব্র্যাকেট আপডেট হয়ে গেছে। অ্যাডমিন চেক করে ভেরিফাই করবে।</p>
+    <div class="match"><div class="mrow">${sideHtml(m,'home')}<div class="score">${m.hs}–${m.aw}</div>${sideHtml(m,'away')}</div></div>
+    <div class="row"><button class="btn green" data-act="tab" data-k="matches">ম্যাচ দেখুন</button><button class="btn ghost" data-act="again">আরেকটা রিসাল্ট দিন</button></div>`;
+  }
+  if(s.stage==='scanning')return `<h2>Result</h2><div class="card scan">${s.url?`<img alt="আপলোড করা রিসাল্ট কার্ড" src="${s.url}">`:''}<div class="row"><div class="spin"></div><div><b>কার্ড স্ক্যান হচ্ছে…</b><div class="hint" style="margin:2px 0 0">স্কোর, স্ট্যাটস ও নাম পড়া হচ্ছে। কয়েক সেকেন্ড লাগতে পারে।</div></div></div></div><div class="row" style="margin-top:12px"><button class="btn ghost small" data-act="cancelScan">বাতিল</button></div>`;
+  if(s.stage==='review')return vReview();
+  const none=!candidates().length;
+  return `<h2>Result</h2><p class="lead">ম্যাচ শেষে eFootball-এর <b>Full Time</b> স্ট্যাটস স্ক্রিনের স্ক্রিনশট দিন। সাইট নিজে স্কোর ও স্ট্যাটস পড়ে ম্যাচ খুঁজে নেবে। <b>ম্যাচ জেতা বা ড্র করা প্লেয়ার</b> রিসাল্ট দেবে।</p>
+  ${s.err?`<p class="note bad">${esc(s.err)}</p>`:''}
+  ${none?`<p class="note warn">আপনার কোনো পেন্ডিং ম্যাচ নেই।</p>`:S.scan?`<label class="drop" id="drop" for="file"><b>রিসাল্ট কার্ডের ছবি দিন</b><span>ট্যাপ করুন বা ছবি ড্র্যাগ করুন</span></label><input type="file" id="file" accept="image/*" hidden>`:`<p class="note warn">অটো স্ক্যান এখনো চালু করা হয়নি। নিচের বাটনে নিজে রিসাল্ট লিখুন।</p>`}
+  ${none?'':`<p class="hint"><button class="btn ghost small" data-act="manual">স্ক্যান ছাড়া নিজে লিখব</button></p>`}`;
+}
+function vReview(){
+  const s=S.sub,m=matchById(s.mid),p=P(),cand=candidates();
+  const hn=m?p[m.home_id]?.name:'Home',an=m?p[m.away_id]?.name:'Away';
+  const ko=m&&m.stage!=='group',draw=s.hs!==''&&s.aw!==''&&+s.hs===+s.aw;
+  const opts=`<option value="">— ম্যাচ বেছে নিন —</option>${cand.map(c=>`<option value="${esc(c.id)}"${c.id===s.mid?' selected':''}>${esc(mLabel(c,p))}${c.status==='done'?' (শেষ)':''}</option>`).join('')}`;
+  return `<h2>${s.editing?'রিসাল্ট সংশোধন':'চেক করে সেভ করুন'}</h2>
+  <p class="lead">${s.raw?'স্ক্যান শেষ। কিছু ভুল থাকলে ঠিক করে নিন।':'ম্যাচ বেছে স্কোর লিখুন। স্ট্যাটস না থাকলে ফাঁকা রাখতে পারেন।'}</p>
+  ${s.note?`<p class="note ${s.note.k}">${esc(s.note.t)}</p>`:''}${s.err?`<p class="note bad">${esc(s.err)}</p>`:''}
+  <div class="card">
+    ${s.url?`<div class="scan" style="margin-bottom:14px"><img alt="আপলোড করা রিসাল্ট কার্ড" src="${s.url}"><div class="hint" style="margin:0">${s.raw?`কার্ডে পড়া নাম: <b>${esc(s.raw.leftName)}</b> বনাম <b>${esc(s.raw.rightName)}</b>`:''}</div></div>`:''}
+    <div class="field" style="margin-bottom:6px"><span>ম্যাচ</span><select class="f" id="mSel">${opts}</select></div>
+    <div class="sc"><div class="nm">${esc(hn)}</div><input id="hs" type="number" inputmode="numeric" min="0" max="30" aria-label="${esc(hn)} গোল" value="${fnum(s.hs)}"><div class="dash">–</div><input id="aw" type="number" inputmode="numeric" min="0" max="30" aria-label="${esc(an)} গোল" value="${fnum(s.aw)}"><div class="nm r">${esc(an)}</div></div>
+    ${ko&&draw?`<label class="field" style="margin-bottom:14px"><span>পেনাল্টিতে কে জিতেছে?</span><select class="f" id="pen"><option value="">— বেছে নিন —</option><option value="${m.home_id}"${+s.pen===m.home_id?' selected':''}>${esc(hn)}</option><option value="${m.away_id}"${+s.pen===m.away_id?' selected':''}>${esc(an)}</option></select></label>`:''}
+    <details${s.raw||Object.values(s.stats).some(v=>v&&v[0]!==null)?' open':''}><summary class="label" style="cursor:pointer;margin-bottom:10px">Match stats</summary>
+    <div class="sgrid">${STATS.map(([k,l])=>{const v=s.stats[k]||[null,null];return `<input type="number" inputmode="numeric" min="0" aria-label="${l} ${esc(hn)}" data-stat="${k}" data-i="0" value="${fnum(v[0])}"><div class="l">${l}</div><input type="number" inputmode="numeric" min="0" aria-label="${l} ${esc(an)}" data-stat="${k}" data-i="1" value="${fnum(v[1])}">`}).join('')}</div></details>
+    <div class="row"><button class="btn green" data-act="save"${S.busy==='save'?' disabled':''}>${S.busy==='save'?'সেভ হচ্ছে…':'রিসাল্ট সেভ করুন'}</button><button class="btn ghost" data-act="again">বাতিল</button></div>
+  </div>`;
+}
+function shrink(file){
+  return new Promise((ok,no)=>{
+    const img=new Image(),u=URL.createObjectURL(file);
+    img.onload=()=>{const sc=Math.min(1,1400/Math.max(img.naturalWidth,img.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(img.naturalWidth*sc);c.height=Math.round(img.naturalHeight*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?ok(b):no(new Error('ছবি পড়া যায়নি।')),'image/jpeg',.88)};
+    img.onerror=()=>{URL.revokeObjectURL(u);no(new Error('ছবি পড়া যায়নি।'))};img.src=u;
+  });
+}
+function applyMatch(raw,m,swap){const s=S.sub;s.mid=m.id;Object.assign(s,orient(raw,swap));s.pen=''}
+async function scan(file){
+  if(!file||!file.type.startsWith('image/'))return;
+  if(S.sub.url)try{URL.revokeObjectURL(S.sub.url)}catch(e){}
+  const ctl=new AbortController(),pending=S.pendingId;S.pendingId='';
+  S.sub={...newSub(),stage:'scanning',url:URL.createObjectURL(file),ctl};refresh(true);
+  try{
+    const blob=await shrink(file);
+    const {raw}=await api('scan',{method:'POST',raw:blob,type:'image/jpeg'});
+    if(S.sub.stage!=='scanning')return;
+    const s=S.sub,cand=candidates();s.raw=raw;s.stage='review';s.ctl=null;
+    const m=findMatch(raw,cand,D().players),pm=pending&&cand.find(c=>c.id===pending);
+    if(m){applyMatch(raw,m.m,m.swap);s.note=m.m.status==='done'?{k:'warn',t:'এই ম্যাচের রিসাল্ট আগেই দেওয়া আছে।'}:{k:'ok',t:'ম্যাচ মিলে গেছে। স্কোর ও স্ট্যাটস চেক করে সেভ করুন।'}}
+    else if(pm){applyMatch(raw,pm,swapFor(raw,pm,P()));s.note={k:'warn',t:'কার্ডের নাম ম্যাচের সঙ্গে পুরোপুরি মেলেনি। ম্যাচ ঠিক আছে কি না দেখে নিন।'}}
+    else{Object.assign(s,orient(raw,false));s.note={k:'warn',t:'কার্ডের নাম কোনো ম্যাচের সঙ্গে মেলেনি। নিচে থেকে ম্যাচ বেছে নিন।'}}
+  }catch(e){
+    if(S.sub.stage!=='scanning')return;
+    const s=S.sub;s.stage='idle';s.ctl=null;s.err=e.message+' চাইলে নিজে লিখে দিতে পারেন।';
+  }
+  refresh(true);
+}
+function readForm(){
+  const s=S.sub,g=id=>document.getElementById(id);if(!g('hs'))return;
+  s.hs=g('hs').value;s.aw=g('aw').value;if(g('pen'))s.pen=g('pen').value;
+  document.querySelectorAll('[data-stat]').forEach(i=>{const k=i.dataset.stat,x=+i.dataset.i;s.stats[k]=s.stats[k]||[null,null];s.stats[k][x]=i.value===''?null:Math.max(0,Math.round(+i.value))});
+}
+async function save(){
+  readForm();const s=S.sub;s.err='';const m=matchById(s.mid);
+  const hs=s.hs===''?NaN:+s.hs,aw=s.aw===''?NaN:+s.aw;
+  if(!m)s.err='আগে ম্যাচ বেছে নিন।';
+  else if(!Number.isInteger(hs)||!Number.isInteger(aw)||hs<0||aw<0)s.err='দুই দিকের স্কোর লিখুন।';
+  else if(m.stage!=='group'&&hs===aw&&!s.pen)s.err='নকআউটে ড্র হলে পেনাল্টিতে কে জিতেছে সেটা বেছে নিন।';
+  else if(!isAdmin()&&!canSubmitSide(m.stage,hs,aw,+s.pen||null,m.home_id,m.away_id,myId()))s.err=hs===aw&&m.stage!=='group'?'পেনাল্টিতে যে জিতেছে সে রিসাল্ট দেবে।':'ম্যাচ জেতা (বা ড্র করা) প্লেয়ার রিসাল্ট দেবে। স্কোর ঠিক আছে কি না দেখুন।';
+  if(s.err){refresh(true);return}
+  S.busy='save';refresh(true);
+  try{
+    await api(`matches/${encodeURIComponent(m.id)}/result`,{method:'POST',body:{hs,aw,stats:s.stats,penWinner:+s.pen||null,source:s.raw?'scan':'manual'}});
+    await load();S.sub={...s,stage:'saved'};
+  }catch(e){s.err=e.message}
+  S.busy='';refresh(true);
+}
+
+/* ---------- admin ---------- */
+function vAdmin(){
+  const d=D(),started=d.matches.length>0,gm=d.matches.filter(m=>m.stage==='group'),ko=d.matches.some(m=>m.stage!=='group');
+  const gdone=gm.filter(m=>m.status==='done').length,gver=gm.filter(m=>m.verified).length;
+  const unver=d.matches.filter(m=>m.status==='done'&&!m.verified).sort(sortM);
+  const cf=S.confirm;
+  const logins=d.players.map(p=>`${p.name} — PIN: ${p.pin}`).join('\n');
+  return `<h2>Admin</h2><p class="lead">প্লেয়ার যোগ করুন, গ্রুপ ড্র করুন, রিসাল্ট চেক করুন এবং নকআউট শুরু করুন।</p>
+  <div class="stack">
+  <section class="card"><div class="label" style="margin-bottom:10px">Tournament</div>
+    <label class="field" style="margin-bottom:12px"><span>টুর্নামেন্টের নাম</span><input type="text" id="tName" maxlength="60" value="${esc(d.settings.name||'')}" placeholder="Goal Hunters Solo Cup"></label>
+    <button class="btn" data-act="saveName">সেভ করুন</button></section>
+
+  <section class="card"><div class="label" style="margin-bottom:10px">Players (${d.players.length} / 40)</div>
+    ${d.players.length?`<ul class="plist">${d.players.map(p=>`<li><div><b>${esc(p.name)}</b><small>${esc(p.team)}${p.grp?' · Group '+p.grp:''}</small></div><span class="pin" title="Login PIN">${esc(p.pin)}</span><div class="acts"><button class="btn ghost small" data-act="newPin" data-id="${p.id}">নতুন PIN</button>${started?'':`<button class="btn ghost small" data-act="delP" data-id="${p.id}">Remove</button>`}</div></li>`).join('')}</ul>
+    <details style="margin-bottom:14px"><summary class="label" style="cursor:pointer">সবার Login তালিকা (কপি করে পাঠান)</summary><textarea readonly id="loginList" style="margin-top:8px">${esc(logins)}</textarea></details>`:`<p class="hint" style="margin:0 0 12px">এখনো কেউ নেই।</p>`}
+    ${started?`<p class="hint">গ্রুপ ড্র হয়ে গেছে, তাই প্লেয়ার বদলানো যাবে না।</p>`:`<label class="field"><span>প্রতি লাইনে একজন: নাম | eFootball টিমের নাম (কার্ডে যেমন দেখায়)</span><textarea id="bulk" placeholder="Abid | Abid X Tiki-Taka&#10;Rafi | LA-PULGA-10"></textarea></label>
+    <p class="hint" style="margin:8px 0 12px">টিমের নাম মিললেই সাইট কার্ড দেখে সঠিক ম্যাচ খুঁজে নেয়। টিমের নাম না দিলে প্লেয়ারের নামই ব্যবহার হবে। প্রতিজনের জন্য একটি PIN নিজে থেকে তৈরি হয়।</p>
+    <button class="btn green" data-act="addPlayers"${S.busy==='add'?' disabled':''}>প্লেয়ার যোগ করুন</button>`}</section>
+
+  <section class="card"><div class="label" style="margin-bottom:10px">Group draw</div>
+    ${started?`<p style="margin:0 0 12px">৮টি গ্রুপে ${gm.length}টি ম্যাচ তৈরি আছে। শেষ হয়েছে ${gdone}টি, ভেরিফাই হয়েছে ${gver}টি।</p>`
+    :`<p style="margin:0 0 12px">${d.players.length<24?'কমপক্ষে ২৪ জন প্লেয়ার লাগবে (৪০ জনে ৮ গ্রুপ × ৫ জন)।':`${d.players.length} জনকে র‍্যান্ডমভাবে ৮টি গ্রুপে ভাগ করা হবে।`}</p>`}
+    ${!started?`<button class="btn green" data-act="draw"${d.players.length<24||S.busy?' disabled':''}>${S.busy==='draw'?'ড্র হচ্ছে…':'গ্রুপ ড্র করুন'}</button>`:''}</section>
+
+  ${started?`<section class="card"><div class="label" style="margin-bottom:10px">রিসাল্ট চেক (${unver.length}টি বাকি)</div>
+    ${unver.length?`<ul class="plist">${unver.map(m=>`<li><div><b>${esc(P()[m.home_id]?.name)} ${m.hs}–${m.aw} ${esc(P()[m.away_id]?.name)}</b><small>${m.stage==='group'?'Group '+m.grp:STAGES[m.stage]} · ${m.source==='scan'?'স্ক্যান':'হাতে লেখা'}${m.submitted_by?' · দিয়েছে: '+esc(P()[m.submitted_by]?.name):''}</small></div><div class="acts"><button class="btn green small" data-act="verify" data-id="${esc(m.id)}" data-v="1">✓ Verify</button><button class="btn ghost small" data-act="editM" data-id="${esc(m.id)}">সংশোধন</button>${cf==='del:'+m.id?`<button class="btn danger small" data-act="delM" data-id="${esc(m.id)}">হ্যাঁ, ডিলিট</button><button class="btn ghost small" data-act="confirm" data-k="">না</button>`:`<button class="btn ghost small" data-act="confirm" data-k="del:${esc(m.id)}">Delete</button>`}</div></li>`).join('')}</ul><button class="btn ghost" data-act="verifyAll">সবগুলো Verify করুন</button>`:`<p class="hint" style="margin:0">সব রিসাল্ট চেক করা আছে।</p>`}</section>
+
+  <section class="card"><div class="label" style="margin-bottom:10px">Knockout</div>
+    ${ko?`<p style="margin:0 0 12px">নকআউট ব্র্যাকেট তৈরি আছে।</p>${cf==='rko'?`<p class="note bad">নকআউটের সব ম্যাচ ও রিসাল্ট মুছে যাবে। নিশ্চিত?</p><div class="row"><button class="btn danger" data-act="resetKo">হ্যাঁ, মুছুন</button><button class="btn ghost" data-act="confirm" data-k="">না</button></div>`:`<button class="btn ghost" data-act="confirm" data-k="rko">নকআউট রিসেট</button>`}`
+    :`<p style="margin:0 0 12px">${gdone<gm.length?`গ্রুপ ম্যাচ শেষ হয়েছে ${gdone} / ${gm.length}।`:gver<gm.length?`সব গ্রুপ ম্যাচ শেষ। এখন বাকি ${gm.length-gver}টি রিসাল্ট ভেরিফাই করুন।`:'সব গ্রুপ রিসাল্ট ভেরিফাই করা। Round of 16 তৈরি করা যাবে।'}</p>
+    <button class="btn green" data-act="knockout"${gver<gm.length||S.busy?' disabled':''}>Round of 16 তৈরি করুন</button><p class="hint">প্রতি গ্রুপের প্রথম ২ জন যাবে। গ্রুপ-এর বিজয়ী অন্য গ্রুপের রানার-আপের সাথে খেলবে।</p>`}</section>`:''}
+
+  <section class="card"><div class="label" style="margin-bottom:10px">Danger zone</div>
+    ${cf==='reset'?`<p class="note bad">সব গ্রুপ, ম্যাচ ও রিসাল্ট মুছে যাবে। প্লেয়ার তালিকা থাকবে। নিশ্চিত?</p><div class="row"><button class="btn danger" data-act="resetAll">হ্যাঁ, সব রিসেট</button><button class="btn ghost" data-act="confirm" data-k="">না</button></div>`:`<button class="btn ghost" data-act="confirm" data-k="reset"${started?'':' disabled'}>সব ম্যাচ রিসেট করুন</button>`}</section>
+  </div>`;
+}
+async function run(fn,okMsg){
+  S.msg=null;
+  try{await fn();if(okMsg)S.msg={k:'ok',t:okMsg}}catch(e){S.msg={k:'bad',t:e.message}}
+  S.busy='';S.confirm='';await load();refresh(true);
+}
+
+/* ---------- events ---------- */
+const root=document.body;
+root.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  const a=el.dataset.act,id=el.dataset.id;
+  if(a==='tab'){S.tab=el.dataset.k;S.confirm='';S.msg=null;if(S.tab==='submit'&&S.sub.stage==='saved')S.sub=newSub();refresh(true);scrollTo({top:0})}
+  else if(a==='reload'){load()}
+  else if(a==='logout'){setToken('');S.me=null;S.sub=newSub();S.f.mine=false;S.tab='matches';refresh(true)}
+  else if(a==='flt'){S.f[el.dataset.k]=el.dataset.v;refresh(true)}
+  else if(a==='mine'){S.f.mine=!S.f.mine;refresh(true)}
+  else if(a==='submitFor'){S.sub=newSub();S.pendingId=id;S.tab='submit';refresh(true);scrollTo({top:0})}
+  else if(a==='manual'){const s=S.sub=newSub();s.stage='review';s.mid=S.pendingId||'';S.pendingId='';refresh(true)}
+  else if(a==='again'){S.sub=newSub();S.pendingId='';refresh(true)}
+  else if(a==='cancelScan'){S.sub.ctl?.abort();S.sub=newSub();refresh(true)}
+  else if(a==='save')save();
+  else if(a==='editM'){const m=matchById(id),s=S.sub=newSub();Object.assign(s,{stage:'review',mid:m.id,hs:m.hs,aw:m.aw,pen:m.pen_winner||'',editing:true,stats:JSON.parse(JSON.stringify(m.stats||{}))});S.tab='submit';refresh(true);scrollTo({top:0})}
+  else if(a==='confirm'){S.confirm=el.dataset.k;refresh(true)}
+  else if(a==='verify')run(()=>api(`matches/${encodeURIComponent(id)}/verify`,{method:'POST',body:{verified:el.dataset.v==='1'}}));
+  else if(a==='delM')run(()=>api(`matches/${encodeURIComponent(id)}/reset`,{method:'POST'}),'রিসাল্ট ডিলিট হয়েছে। ম্যাচটি আবার পেন্ডিং।');
+  else if(a==='verifyAll')run(async()=>{for(const m of D().matches.filter(m=>m.status==='done'&&!m.verified))await api(`matches/${encodeURIComponent(m.id)}/verify`,{method:'POST',body:{verified:true}})},'সব ভেরিফাই হয়েছে।');
+  else if(a==='saveName')run(()=>api('admin/settings',{method:'POST',body:{name:$('#tName').value.trim()}}),'সেভ হয়েছে।');
+  else if(a==='addPlayers'){S.busy='add';run(async()=>{const r=await api('admin/players',{method:'POST',body:{text:$('#bulk').value}});S.addInfo=r},'প্লেয়ার যোগ হয়েছে। একই নাম থাকলে বাদ গেছে।')}
+  else if(a==='delP')run(()=>api('admin/players/'+id,{method:'DELETE'}));
+  else if(a==='newPin')run(()=>api(`admin/players/${id}/pin`,{method:'POST'}),'নতুন PIN তৈরি হয়েছে।');
+  else if(a==='draw'){S.busy='draw';run(()=>api('admin/draw',{method:'POST'}),'গ্রুপ ড্র হয়েছে।')}
+  else if(a==='knockout'){S.busy='ko';run(()=>api('admin/knockout',{method:'POST'}),'Round of 16 তৈরি হয়েছে।')}
+  else if(a==='resetKo')run(()=>api('admin/reset-knockout',{method:'POST'}),'নকআউট রিসেট হয়েছে।');
+  else if(a==='resetAll')run(()=>api('admin/reset',{method:'POST'}),'সব রিসেট হয়েছে।');
+});
+root.addEventListener('submit',async e=>{
+  e.preventDefault();const f=e.target;
+  if(f.id!=='playerLogin'&&f.id!=='adminLogin')return;
+  const body=f.id==='adminLogin'?{password:$('#apw').value}:{playerId:+$('#lp').value,pin:$('#lpin').value};
+  S.busy='login';S.msg=null;refresh(true);
+  try{
+    const r=await api('login',{method:'POST',body});setToken(r.token);S.me=r.me;S.busy='';S.tab=r.me.role==='admin'?'admin':'submit';await load();
+  }catch(err){S.busy='';S.msg={k:'bad',t:err.message}}
+  refresh(true);
+});
+root.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='file')scan(t.files[0]);
+  else if(t.id==='mSel'){
+    readForm();const s=S.sub,m=matchById(t.value);s.mid=t.value;
+    if(m&&s.raw)applyMatch(s.raw,m,swapFor(s.raw,m,P()));
+    s.note=m&&m.status==='done'?{k:'warn',t:'এই ম্যাচের রিসাল্ট আগেই দেওয়া আছে।'}:null;refresh(true);
+  }
+  else if(t.matches('#hs,#aw')){readForm();refresh(true)}
+  else if(t.matches('[data-stat],#pen'))readForm();
+});
+root.addEventListener('toggle',e=>{const d=e.target;if(d.matches?.('details.st')){d.open?S.open.add(d.dataset.id):S.open.delete(d.dataset.id)}},true);
+root.addEventListener('focusout',()=>{setTimeout(()=>{if(S.dirty&&!/INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName||''))refresh()},60)});
+root.addEventListener('dragover',e=>{const d=e.target.closest('#drop');if(d){e.preventDefault();d.classList.add('over')}});
+root.addEventListener('dragleave',e=>{e.target.closest?.('#drop')?.classList.remove('over')});
+root.addEventListener('drop',e=>{const d=e.target.closest('#drop');if(d){e.preventDefault();scan(e.dataTransfer.files[0])}});
+document.addEventListener('paste',e=>{if(S.tab==='submit'&&S.sub.stage==='idle'&&S.scan&&S.me){const f=[...(e.clipboardData?.files||[])].find(x=>x.type.startsWith('image/'));if(f)scan(f)}});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')load()});
+setInterval(()=>{if(document.visibilityState==='visible'&&S.sub.stage!=='scanning')load()},30000);
+
+refresh(true);load();
+</script>
+</body>
+</html>
